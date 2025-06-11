@@ -1,21 +1,18 @@
 const { default: mongoose } = require("mongoose");
-const dotenv = require('dotenv')
-dotenv.config({path: './config.env'})
-const connectDB = (isOnlineDB = true) => {
-    // mongoose.set('strictQuery', false);
+ const connectDB =  (local = false) => {
+  try {
+     mongoose.connect(local?process.env.MONGO_URL_LC :process.env.MONGO_URL, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    }).then(()=>{
+      console.log('Connected to MongoDB');
+    })
 
-    mongoose.connect(
-      isOnlineDB?process.env.MONGO_URL:process.env.MONGO_URL_LC,
-      { useNewUrlParser: true },
-      (error) => {
-        if (error) {
-          console.error('Failed to connect to MongoDB:', error);
-        } else {
-          console.log('Connected to MongoDB');
-        }
-      }
-    );
-  };
+  } catch (error) {
+    console.error('Failed to connect to MongoDB:', error);
+  }
+}
+
   
 module.exports ={ connectDB}
   
