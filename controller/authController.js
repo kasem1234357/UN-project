@@ -64,7 +64,8 @@ exports.signup = asyncErrorHandler(async (req, res,next) => {
        api.dataHandler("create", { accessToken:newToken.token,  data:{
     nickName:newUser.userName,
     email:newUser.email,
-    role:newUser.role
+    role:newUser.role,
+    isVerified:newUser.isVerified
   } });
     }else{
       await User.findByIdAndDelete(newUser._id)
@@ -122,6 +123,7 @@ exports.verifyOtp =asyncErrorHandler( async (req, res,next) => {
 
   user.otp = null;
   user.otpExpires = null;
+  user.isVerified = true;
   await user.save();
 
   const token = signToken(user._id)

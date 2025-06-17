@@ -27,6 +27,10 @@ const userSchema = new mongoose.Schema({
      enum:['normal','admin','super_admin'],
      default:'normal'
     },
+    isVerified:{
+        type:Boolean,
+        default:false
+    },
      googleId: String,
      otp: String,
      otpExpires: Date,
