@@ -16,7 +16,9 @@ const options = {
   status:null
 }
 class API {
-  #pagging = {
+  #pagging = null
+  /*
+  {
     totalRecords:0,
     pageSize:0,
     pageNumber:0,
@@ -29,6 +31,7 @@ class API {
     lastItem:{},
     withPaging:false
   }
+    */
   constructor(request, response, query = null ,queryParams=[]) {
     this.req = request;
      this.res = response;

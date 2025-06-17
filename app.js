@@ -38,7 +38,7 @@ app.use(requestTime)
 
 //    ROUTES    //
 
-app.use('/api/user',userRoute)
+app.use('/api/auth',userRoute)
 
 //==============//
 // handling routes not found error

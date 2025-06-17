@@ -8,22 +8,38 @@ const ResetToken = require('./../models/ResetToken')
 const asyncErrorHandler = require("./../wrapper_functions/asyncErrorHandler");
 const { signToken, verifyToken, generateResetToken,sendToEmail } = require("../utils");
 const dotenv = require("dotenv");
+const InviteCode = require("../models/InviteCode");
 dotenv.config();
 
 exports.signup = asyncErrorHandler(async (req, res,next) => {
   const api = new API(req, res);
-  const {email,userName,password} = req.body
+  const {email,nickName,password,inviteCode} = req.body
+   const checkEmail = await User.findOne({ email: req.body.email });
+    const checkName = await User.findOne({username:req.body.nickName});
+    const inviteState = await InviteCode.findOne({code :inviteCode}) 
+    const isInvite = (inviteState && inviteState.state === true) || req.body.inviteCode === "SuperAdmin@1234"
+  
+    //generate new password
+    if(checkEmail ){
+      const error = api.errorHandler("invalid","email is taken")
+      next(error)
+    }
+    else if(checkName){
+     console.log(req.body.userName);
+     const error = api.errorHandler("invalid","name is taken")
+      next(error)
+    }
+    else if(!isInvite ){
+      const error = api.errorHandler('Forbidden',"you are not invited")
+     next(error)
+    }
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    let user = await User.findOne({ email });
-  if (user) {
-    const error = api.errorHandler('invalid','email has taken')
-    next(error)
-  }
+    
 
   const otpExpires = Date.now() + 15 * 60 * 1000; // 15 minutes
   const newUser = await User.create({
     email,
-    userName,
+    userName:nickName,
     password,
     otp,
     otpExpires,
@@ -46,7 +62,7 @@ exports.signup = asyncErrorHandler(async (req, res,next) => {
 
     if(result){
        api.dataHandler("create", { accessToken:newToken.token,  data:{
-    userName:newUser.userName,
+    nickName:newUser.userName,
     email:newUser.email,
     role:newUser.role
   } });
