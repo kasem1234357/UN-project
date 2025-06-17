@@ -1,5 +1,5 @@
 const dotenv = require('dotenv');
-dotenv.config({path: './config.env'});
+dotenv.config();
 
 const { connectDB } = require('./db/connectDB');
 // handle unknown variable error
@@ -11,7 +11,7 @@ process.on('uncaughtException', (err) => {
 
 const app = require('./app');
 
-connectDB(false)
+connectDB(true)
 const port = process.env.PORT || 8000;
 
 const server = app.listen(port, () => {

@@ -2,7 +2,7 @@ const nodemailer = require('nodemailer')
 const handleError = require('./errorHandeler')
 const dotenv = require("dotenv");
 const { MSG_TYPE } = require('../constraints/CONSTANTS');
-dotenv.config({path: '../config.env'});
+dotenv.config();
 
 /**
  * Description

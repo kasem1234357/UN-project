@@ -8,7 +8,7 @@ const ResetToken = require('./../models/ResetToken')
 const asyncErrorHandler = require("./../wrapper_functions/asyncErrorHandler");
 const { signToken, verifyToken, generateResetToken,sendToEmail } = require("../utils");
 const dotenv = require("dotenv");
-dotenv.config({path: '../config.env'});
+dotenv.config();
 
 exports.signup = asyncErrorHandler(async (req, res,next) => {
   const api = new API(req, res);

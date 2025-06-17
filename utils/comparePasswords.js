@@ -1,6 +1,6 @@
 const crypto = require("crypto");
 const dotenv = require('dotenv')
-dotenv.config({path: './config.env'})
+dotenv.config()
 /**
  * Description
  * this function to compare password
