@@ -5,7 +5,7 @@ const resetTokenSchema = mongoose.Schema({
         ref:"users",
         required:true
     },
-    token:{
+    code:{
         type: String,
         required:true
     },

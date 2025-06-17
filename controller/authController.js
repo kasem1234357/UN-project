@@ -1,6 +1,6 @@
 const API = require("../classes/Api");
 const User = require("./../models/User");
-const { GET_RESET_PASSWORD_URL, SUPPORT_EMAIL_TEMPLATE } = require("../constraints/CONSTANTS");
+const { GET_RESET_PASSWORD_URL, SUPPORT_EMAIL_TEMPLATE, RESET_PASSWORD_TEMPLATE } = require("../constraints/CONSTANTS");
 const Token = require('./../models/Token')
 const ResetToken = require('./../models/ResetToken')
 //)
@@ -33,16 +33,14 @@ exports.signup = asyncErrorHandler(async (req, res,next) => {
       const error = api.errorHandler('Forbidden',"you are not invited")
      next(error)
     }
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+ // const otp = Math.floor(100000 + Math.random() * 900000).toString();
     
 
-  const otpExpires = Date.now() + 15 * 60 * 1000; // 15 minutes
+  //const otpExpires = Date.now() + 15 * 60 * 1000; // 15 minutes
   const newUser = await User.create({
     email,
     userName:nickName,
     password,
-    otp,
-    otpExpires,
     confirmPassword:password
   });
   // create access token
@@ -53,27 +51,13 @@ exports.signup = asyncErrorHandler(async (req, res,next) => {
 
    // send request to the client 
    newUser.save()
-       const result = await sendToEmail({
-      email:req.body.email,
-      subject:'otp verification',
-      isTemplate:true,
-      template:SUPPORT_EMAIL_TEMPLATE.replace('{{subject}}', 'OTP verification').replace('{{message}}', otp).replace('{{type}}', 'system msg').replace('{{from}}',req.body.email)
-    })
-
-    if(result){
-       api.dataHandler("create", { accessToken:newToken.token,  data:{
+       api.dataHandler("create", {data:{
+        token:newToken.token,
     nickName:newUser.userName,
     email:newUser.email,
     role:newUser.role,
     isVerified:newUser.isVerified
   } });
-    }else{
-      await User.findByIdAndDelete(newUser._id)
-      const error = api.errorHandler('uncomplated_data','something going wrong with send to email operation')
-      next(error)
-      
-    } 
- 
 });
 exports.login = asyncErrorHandler(async (req, res, next) => {
   const api = new API(req, res);
@@ -105,35 +89,41 @@ exports.login = asyncErrorHandler(async (req, res, next) => {
   const newToken = await Token.create({token:accessToken,userId:user._id})
   // send access and refresh token to db
 
-  api.dataHandler("create", { accessToken:newToken.token,  },'user log in and new tokens has been generated');
+  api.dataHandler("create", {   data:{
+    token:newToken.token,
+    nickName:user.userName,
+    email:user.email,
+    role:user.role,
+    isVerified:user.isVerified
+  } },'user log in and new tokens has been generated');
 });
-exports.verifyOtp =asyncErrorHandler( async (req, res,next) => {
-  const api = new API(req,res)
-  const { email, otp } = req.body;
-  const user = await User.findOne({ email });
-  if (!user) {
-    const error = api.errorHandler('not_found','email not found')
-      next(error)
-  }
+// exports.verifyOtp =asyncErrorHandler( async (req, res,next) => {
+//   const api = new API(req,res)
+//   const { email, otp } = req.body;
+//   const user = await User.findOne({ email });
+//   if (!user) {
+//     const error = api.errorHandler('not_found','email not found')
+//       next(error)
+//   }
 
-  if (user.otp !== otp || Date.now() > user.otpExpires) {
-    const error = api.errorHandler('invalid','OTP is invalid or expired')
-    next(error)
-  }
+//   if (user.otp !== otp || Date.now() > user.otpExpires) {
+//     const error = api.errorHandler('invalid','OTP is invalid or expired')
+//     next(error)
+//   }
 
-  user.otp = null;
-  user.otpExpires = null;
-  user.isVerified = true;
-  await user.save();
+//   user.otp = null;
+//   user.otpExpires = null;
+//   user.isVerified = true;
+//   await user.save();
 
-  const token = signToken(user._id)
-  api.setCookie({
-      token:newToken
-    })
-    api.dataHandler('fetch',{
-      token
-    })
-})
+//   const token = signToken(user._id)
+//   api.setCookie({
+//       token:newToken
+//     })
+//     api.dataHandler('fetch',{
+//       token
+//     })
+// })
 
 exports.token = asyncErrorHandler(async (req, res, next) => {
   const refreshToken = req.body.token;
@@ -176,17 +166,17 @@ exports.foregetPassword = asyncErrorHandler(async (req,res,next)=>{
     const error = api.errorHandler('not_found','user not found check if the email correct')
     next(error)
   }
-  const resetToken = generateResetToken()
+  const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
   const newResetToken = await ResetToken.create({
     userID:user._id,
-    token:resetToken
+    code:resetCode
   })
 await newResetToken.save()
-  console.log(GET_RESET_PASSWORD_URL(`${process.env.FRONT_URL}/forgetPassword/${resetToken}`))
+  
   const result = await sendToEmail({
     email:req.body.email,
     subject:'Reset Password',
-    message:GET_RESET_PASSWORD_URL(`${process.env.FRONT_URL}/${resetToken}`)
+    message:RESET_PASSWORD_TEMPLATE.replace('{{subject}}', 'OTP verification').replace('{{message}}', resetCode).replace('{{type}}', 'system msg').replace('{{from}}',req.body.email)
   })
 
   if(result){
@@ -202,7 +192,7 @@ await newResetToken.save()
 })
 exports.resetPassword =asyncErrorHandler(async(req,res,next)=>{
   const api = new API(req,res)
-  const resetUserToken = await ResetToken.find({token:req.body.resetToken})
+  const resetUserToken = await ResetToken.find({code:req.body.code})
   if(!resetUserToken){
     const error = api.errorHandler('invalid','your token in invalid')
     next(error)
