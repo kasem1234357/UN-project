@@ -30,14 +30,7 @@ const isAuth = asyncErrorHandler(async (req,res,next)=>{
       }
      
     // 4- if the user changed password after token was issued 
-    const isPasswordChanged = await user.isPasswordChanged(decodedToken.iat)
-    if(isPasswordChanged){
-        next(api.errorHandler('unauthorized','the password has been changed early please try to login again'))
-    } 
-    const newToken = signToken(user._id);
-    api.setCookie({
-      token:newToken
-    })
+
     // 5- allow user to access route 
     res = api.res
          req.user = user

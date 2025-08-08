@@ -15,23 +15,25 @@ exports.signup = asyncErrorHandler(async (req, res,next) => {
   const api = new API(req, res);
   const {email,nickName,password,inviteCode} = req.body
    const checkEmail = await User.findOne({ email: req.body.email });
-    const checkName = await User.findOne({username:req.body.nickName});
+    const checkName = await User.findOne({userName:req.body.nickName});
     const inviteState = await InviteCode.findOne({code :inviteCode}) 
     const isInvite = (inviteState && inviteState.state === true) || req.body.inviteCode === "SuperAdmin@1234"
   
     //generate new password
     if(checkEmail ){
       const error = api.errorHandler("invalid","email is taken")
-      next(error)
+      return next(error)
+      
     }
     else if(checkName){
-     console.log(req.body.userName);
      const error = api.errorHandler("invalid","name is taken")
-      next(error)
+      return next(error)
+      
     }
     else if(!isInvite ){
       const error = api.errorHandler('Forbidden',"you are not invited")
-     next(error)
+     return next(error)
+     
     }
  // const otp = Math.floor(100000 + Math.random() * 900000).toString();
     
@@ -124,6 +126,7 @@ exports.login = asyncErrorHandler(async (req, res, next) => {
 //       token
 //     })
 // })
+
 
 exports.token = asyncErrorHandler(async (req, res, next) => {
   const refreshToken = req.body.token;

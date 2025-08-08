@@ -120,10 +120,7 @@ class API {
           status: "success",
           isSuccess:true,
           key:options?.status || responce_status[type].status,
-          pagging:{
-            ...this.#pagging,
-             pageSize: data.length,
-          },
+          pagging:null,
           ...data,
           message: options?.customMsg || responce_status[type].msg,
           

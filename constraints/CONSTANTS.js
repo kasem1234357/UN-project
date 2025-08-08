@@ -106,11 +106,18 @@ const RESET_PASSWORD_TEMPLATE = `
 </body>
 </html>
 `
+const MapBuildingSituationEnum = {
+  nearCollapse: { key: 'nearCollapse' },
+  riskyCondition: { key: 'riskyCondition' },
+  moderateCondition: { key: 'moderateCondition' },
+  minor: { key: 'minor' },
+};
 module.exports = {
   REPORT_STATES,
   GET_VERIFIED_EMAIL_MASSEGE,
   SET_VERIFIED_EMAIL_MASSEGE,
   GET_RESET_PASSWORD_URL,
   SUPPORT_EMAIL_TEMPLATE,
-  RESET_PASSWORD_TEMPLATE
+  RESET_PASSWORD_TEMPLATE,
+  MapBuildingSituationEnum
 }

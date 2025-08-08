@@ -7,6 +7,7 @@ const rateLimiter = require('express-rate-limit')
 //=========== Routes =================================//
 
 const userRoute = require('./routes/authRouter')
+const ratingRoute = require('./routes/ratingRouter')
 
 //===================================================//
 //============== meddlewares ========================//
@@ -39,6 +40,7 @@ app.use(requestTime)
 //    ROUTES    //
 
 app.use('/api/auth',userRoute)
+app.use('/api/rating',ratingRoute)
 
 //==============//
 // handling routes not found error
