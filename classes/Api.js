@@ -115,13 +115,22 @@ class API {
  * @returns {any} Processed response data
  */
   dataHandler(type = "default", data = null,options={},pagging=this.#pagging ) {
+    const isList = (data && data.length !== undefined)
     const responseData = data
-      ? {
+      ?!isList? {
           status: "success",
           isSuccess:true,
           key:options?.status || responce_status[type].status,
           pagging:null,
           ...data,
+          message: options?.customMsg || responce_status[type].msg,
+          
+        }:{
+          status: "success",
+          isSuccess:true,
+          key:options?.status || responce_status[type].status,
+          pagging:null,
+          listData:data,
           message: options?.customMsg || responce_status[type].msg,
           
         }

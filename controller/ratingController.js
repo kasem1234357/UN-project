@@ -82,3 +82,9 @@ exports.buildingRatingById = asyncErrorHandler(async (req, res, next)=>{
     api.dataHandler('fetch',{
       data:formatDates(existingRating)})
 });
+exports.getKeys = asyncErrorHandler(async (req, res, next)=>{
+    const api = new API(req, res);
+    const keysData = api.modify(evaluateBuilding.find()).filter().sort().paginate()
+})
+
+
