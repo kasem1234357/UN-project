@@ -24,7 +24,10 @@ const isAuth = asyncErrorHandler(async (req,res,next)=>{
       //await verifyToken(token,process.env.ACCESS_TOKEN_SECRET)
 
     // 3- if the user exits 
-      const user = await User.findById(decodedToken.id)
+     console.log(decodedToken.id)
+      const user = await User.findOne({ _id: decodedToken.id });
+      console.log(user);
+      
       if(!user){
         next(api.errorHandler('not_found'))
       }
@@ -33,7 +36,7 @@ const isAuth = asyncErrorHandler(async (req,res,next)=>{
 
     // 5- allow user to access route 
     res = api.res
-         req.user = user
+    req.user = user
     next()
 
 })

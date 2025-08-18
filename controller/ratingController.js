@@ -39,7 +39,7 @@ exports.upsertRating = asyncErrorHandler(async (req, res, next) => {
     return res.status(400).json({ error: 'polygonId is required' });
   }
 
-  const existingRating = await HeritageBuildingAssessment.findOne({ polygonId });
+  const existingRating = await HeritageBuildingAssessment.findOne({ polygonId }).select('-__v');
 
   let updatedRating;
 
@@ -59,13 +59,16 @@ exports.upsertRating = asyncErrorHandler(async (req, res, next) => {
       ...req.body,
       surveyMadeBy: req.user._id,
       editBy: req.user._id,
-    });
+    }).then(doc => doc.toObject({ versionKey: false }));
     const evaluate = evaluateBuildingCondition(req.body)
+    console.log(evaluate);
+    
     const newEvaluate = await evaluateBuilding.create({
        id:req.body.polygonId,
        key:evaluate
     })
-    newRating.save();
+    console.log(newEvaluate);
+    
     newEvaluate.save();
 
     api.dataHandler("create", { data: formatDates(newRating) });
@@ -84,7 +87,9 @@ exports.buildingRatingById = asyncErrorHandler(async (req, res, next)=>{
 });
 exports.getKeys = asyncErrorHandler(async (req, res, next)=>{
     const api = new API(req, res);
-    const keysData = api.modify(evaluateBuilding.find()).filter().sort().paginate()
+    const keysData = api.modify(evaluateBuilding.find()).filter().sort().paginate().limitFields()
+    const data = await api.query
+    api.dataHandler('fetch',data)
 })
 
 
