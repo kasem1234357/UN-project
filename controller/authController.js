@@ -179,11 +179,12 @@ await newResetToken.save()
   const result = await sendToEmail({
     email:req.body.email,
     subject:'Reset Password',
-    message:RESET_PASSWORD_TEMPLATE.replace('{{subject}}', 'OTP verification').replace('{{message}}', resetCode).replace('{{type}}', 'system msg').replace('{{from}}',req.body.email)
+    isTemplate:true,
+    template:RESET_PASSWORD_TEMPLATE.replace('{{subject}}', 'OTP verification').replace('{{message}}', resetCode).replace('{{type}}', 'system msg').replace('{{from}}',req.body.email)
   })
 
   if(result){
-    api.dataHandler('create','reset token created its valid for 15 min')
+    api.dataHandler('create','otp code created its valid for 15 min')
   }else{
     await ResetToken.findByIdAndDelete(newResetToken._id)
     const error = api.errorHandler('uncomplated_data','something going wrong with send to email operation')
@@ -200,7 +201,7 @@ exports.resetPassword =asyncErrorHandler(async(req,res,next)=>{
     const error = api.errorHandler('invalid','your token in invalid')
     next(error)
   }
-  const currentUser = await User.findById(resetUserToken.userId)
+  const currentUser = await User.findById(resetUserToken.userID)
   if(!currentUser){
     const error = api.errorHandler('not_found','user not found')
     next(error)
