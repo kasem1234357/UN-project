@@ -196,7 +196,7 @@ await newResetToken.save()
 })
 exports.resetPassword =asyncErrorHandler(async(req,res,next)=>{
   const api = new API(req,res)
-  const resetUserToken = await ResetToken.find({code:req.body.code})
+  const resetUserToken = await ResetToken.One({code:req.body.code})
   if(!resetUserToken){
     const error = api.errorHandler('invalid','your token in invalid')
     next(error)
