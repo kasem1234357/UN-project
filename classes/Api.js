@@ -130,7 +130,7 @@ class API {
           isSuccess:true,
           key:options?.status || responce_status[type].status,
           pagging:null,
-          listData:data,
+          dataList:data,
           message: options?.customMsg || responce_status[type].msg,
           
         }

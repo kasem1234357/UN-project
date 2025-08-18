@@ -52,7 +52,7 @@ exports.upsertRating = asyncErrorHandler(async (req, res, next) => {
     });
 
     updatedRating = await existingRating.save();
-    api.dataHandler("update", { data: formatDates(updatedRating) });
+    api.dataHandler("update", { data: updatedRating});
   } else {
     // Create new rating
     const newRating = await HeritageBuildingAssessment.create({
@@ -71,7 +71,7 @@ exports.upsertRating = asyncErrorHandler(async (req, res, next) => {
     
     newEvaluate.save();
 
-    api.dataHandler("create", { data: formatDates(newRating) });
+    api.dataHandler("create", { data: newRating });
   }
 });
 exports.buildingRatingById = asyncErrorHandler(async (req, res, next)=>{
@@ -83,7 +83,7 @@ exports.buildingRatingById = asyncErrorHandler(async (req, res, next)=>{
         next(error)
     }
     api.dataHandler('fetch',{
-      data:formatDates(existingRating)})
+      data:existingRating})
 });
 exports.getKeys = asyncErrorHandler(async (req, res, next)=>{
     const api = new API(req, res);
