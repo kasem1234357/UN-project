@@ -6,7 +6,7 @@ const ResetToken = require('./../models/ResetToken')
 //)
 
 const asyncErrorHandler = require("./../wrapper_functions/asyncErrorHandler");
-const { signToken, verifyToken, generateResetToken,sendToEmail } = require("../utils");
+const { signToken, verifyToken, generateResetToken,sendToEmail, hashPassword } = require("../utils");
 const dotenv = require("dotenv");
 const InviteCode = require("../models/InviteCode");
 dotenv.config();
@@ -196,7 +196,7 @@ await newResetToken.save()
 })
 exports.resetPassword =asyncErrorHandler(async(req,res,next)=>{
   const api = new API(req,res)
-  const resetUserToken = await ResetToken.One({code:req.body.code})
+  const resetUserToken = await ResetToken.findOne({code:req.body.code})
   if(!resetUserToken){
     const error = api.errorHandler('invalid','your token in invalid')
     next(error)
@@ -211,7 +211,7 @@ exports.resetPassword =asyncErrorHandler(async(req,res,next)=>{
     next(error)
   }
   const newHashedPassword = hashPassword(req.body.newPassword)
-  up
+
   await currentUser.updateOne({$set:{password:newHashedPassword}})
   api.dataHandler('update')
 })
