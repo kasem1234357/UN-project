@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
 const bcrypt = require('bcryptjs');
+const { comparePasswords, hashPassword } = require('../utils');
 //name, email, password, confirmPassword, photo
 const userSchema = new mongoose.Schema({
     
@@ -51,7 +52,7 @@ const userSchema = new mongoose.Schema({
 
 userSchema.pre('save',async function(next){
     if(!this.isModified('password')) return next()
-    this.password = await bcrypt.hash(this.password,12)
+    this.password =  hashPassword(this.password)
     //this.confirmPassword = undefined
     next();
 })
@@ -70,7 +71,8 @@ userSchema.pre('save',async function(next){
 
 
 userSchema.methods.comparePasswordDB = async function(pass,passDB){
-   return await bcrypt.compare(pass,passDB)
+    return comparePasswords(pass,passDB)
+  // return await bcrypt.compare(pass,passDB)
 }
 userSchema.methods.isPasswordChanged = async function(jwtTimestamp){
     console.log(this.passwordChangedAt ,jwtTimestamp )

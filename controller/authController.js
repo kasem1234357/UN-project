@@ -76,7 +76,8 @@ exports.login = asyncErrorHandler(async (req, res, next) => {
     next(error);
   }
   // check if password correct
-  const isMatch = await user.comparePasswordDB(password, user.password);
+  const hashedPassword = hashPassword(password)
+  const isMatch = user.password === hashedPassword
   if (!isMatch) {
     const error = api.errorHandler("invalid");
     next(error);
