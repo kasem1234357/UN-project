@@ -58,13 +58,13 @@ function evaluateBuildingCondition(rating) {
   const avgHazard = totalHazard / 5;
 
   // Final condition evaluation
-  if (damagePercentage >= 4 && avgHazard >= 1.5 && avgDamage >= 2.5) {
+  if (damagePercentage >= 4 || avgHazard >= 1.5 || avgDamage >= 2.5) {
     return MapBuildingSituationEnum.nearCollapse.key;
-  } else if (damagePercentage >= 3 && avgDamage >= 2 && avgHazard >= 1) {
+  } else if (damagePercentage >= 3 || avgDamage >= 2 || avgHazard >= 1) {
     return MapBuildingSituationEnum.riskyCondition.key;
-  } else if (damagePercentage >= 2 && avgDamage >= 1.5) {
+  } else if (damagePercentage >= 2 || avgDamage >= 1.5) {
     return MapBuildingSituationEnum.moderateCondition.key;
-  } else if (damagePercentage >= 1 && avgDamage >= 1) {
+  } else if (damagePercentage >= 1 || avgDamage >= 1) {
     return MapBuildingSituationEnum.minor.key;
   } else {
     return MapBuildingSituationEnum.minor.key;

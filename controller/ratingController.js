@@ -52,6 +52,17 @@ exports.upsertRating = asyncErrorHandler(async (req, res, next) => {
     });
 
     updatedRating = await existingRating.save();
+     const evaluate = evaluateBuildingCondition(req.body)
+    console.log(evaluate);
+     const newEvaluate = await evaluateBuilding.findOneAndUpdate({
+       id:req.body.polygonId,
+    },{
+       key:evaluate
+    })
+    console.log(newEvaluate);
+    
+    newEvaluate.save();
+
     api.dataHandler("update", { data: updatedRating});
   } else {
     // Create new rating
@@ -91,5 +102,61 @@ exports.getKeys = asyncErrorHandler(async (req, res, next)=>{
     const data = await api.query
     api.dataHandler('fetch',data)
 })
+exports.getAllStatics = asyncErrorHandler(async(req,res,next)=>{
+  const pipeline = [
+    // Join with User to get reviewer info (editBy)
+    {
+      $lookup: {
+        from: 'users', // collection name in MongoDB
+        localField: 'editBy',
+        foreignField: '_id',
+        as: 'reviewerData'
+      }
+    },
+    {
+      $unwind: {
+        path: '$reviewerData',
+        preserveNullAndEmptyArrays: true
+      }
+    },
+    // Join with EvaluateBuilding to get status
+    {
+      $lookup: {
+        from: 'evaluatebuildings', // collection name
+        localField: 'polygonId', // assuming EvaluateBuilding.id maps to HeritageBuildingAssessment _id
+        foreignField: 'id',
+        as: 'evaluationData'
+      }
+    },
+    {
+      $unwind: {
+        path: '$evaluationData',
+        preserveNullAndEmptyArrays: true
+      }
+    },
+    // Project the required fields
+    {
+      $project: {
+        _id: 0,
+        areaName: '$neighborhood', // or governorate/district based on your requirement
+        reviewer: '$reviewerData.userName',
+        buildingStatus: '$evaluationData.key',
+        createdAt:1,
+        constructionType:1,
+        polygonId:1
+      }
+    }
+  ];
+  const api = new API(req,res)
+  api.modify(HeritageBuildingAssessment.aggregate(pipeline) ).filter().sort().paginate()
+  const result = await api.query
+  api.dataHandler('fetch',result)
+})
+exports.getAll = asyncErrorHandler(async(req,res,next)=>{
 
+  const api = new API(req,res)
+  api.modify(HeritageBuildingAssessment ).filter().sort().paginate()
+  const result = await api.query
+  api.dataHandler('fetch',result)
+})
 

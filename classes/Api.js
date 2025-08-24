@@ -180,60 +180,81 @@ class API {
    * Sort the query results.
    */
   sort() {
-    const {sort} = this.getQuery().otherQuery;
-    if (sort) {
-      const sortBy = sort.split(",").join(" ");
+  const sortQuery = this.getQuery().otherQuery?.sort;
+  const sortStage = sortQuery
+    ? sortQuery.split(',').reduce((acc, field) => {
+        const [key, order] = field.startsWith('-')
+          ? [field.slice(1), -1]
+          : [field, 1];
+        acc[key] = order;
+        return acc;
+      }, {})
+    : { createdAt: -1 };
 
-      this.query = this.query.sort(sortBy);
+  // Handle aggregate or find
+  if (Array.isArray(this.query?._pipeline)) {
+    this.query._pipeline.push({ $sort: sortStage });
+  } else {
+    this.query = this.query.sort(sortStage);
+  }
+
+  return this;
+}
+  filter(searchableFields = [], numericFields = []) {
+  const queryFilter = JSON.parse(this.getQuery().filteringQuery || '{}');
+
+  // Build $match object
+  const match = {};
+  for (let key of Object.keys(queryFilter)) {
+    const value = queryFilter[key];
+
+    if (value === undefined || value === '') continue;
+
+    if (numericFields.includes(key)) {
+      match[key] = parseInt(value);
+    } else if (searchableFields.includes(key)) {
+      match[key] = { $regex: new RegExp(value, 'i') };
     } else {
-      this.query = this.query.sort("-createdAt");
+      match[key] = value;
     }
-    /**
-     * @returns {this}
-     */
-    return this;
   }
 
-  /**
-   * Filter the query results.
-   * @returns {API} API instance.
-   */
-  filter() {
-    const filteringQuery = JSON.parse(this.getQuery().filteringQuery)
-    this.query = this.query.find(filteringQuery);
-    /**
-     * @returns {this}
-     */
-    return this;
+  // If this.query is an aggregation pipeline (array), inject $match
+  if (Array.isArray(this.query?._pipeline)) {
+
+    this.query._pipeline.unshift({ $match: match });
+  } else {
+    this.query = this.query.find(match);
   }
-    /**
-   * Limit the fields of the query results.
-   * @returns {API} API instance.
-   */
-  limitFields() {
-    const {fields} = this.getQuery().otherQuery;
-    if (fields) {
-      const fields = fields.split(",").join(" ");
+
+  return this;
+}
+  limitFields(fieldsItems) {
+ 
+    const fieldQuery =  this.getQuery().otherQuery.fields ;
+    if (fieldQuery) {
+      
+      const fields = fieldQuery.split(",").join(" ");
+      
+      
       this.query = this.query.select(fields);
-    } else {
+    } 
+    else if(fieldsItems){
+
+      const fields = fieldsItems.join(" ");
+      
+      this.query = this.query.select(fields);
+      
+    }else  {
       this.query = this.query.select("-__v");
     }
-    /**
-     * @returns {this}
-     */
     return this;
   }
-    /**
-   * Paginate the query results.
-   * @returns {API} API instance.
-   */
   paginate() {
-    const { page = 1, limit = 10 } = this.getQuery().otherQuery
+    const page = this.getQuery().otherQuery.page * 1 || 1;
+    const limit = this.getQuery().otherQuery.limit * 1 || 10;
     const skip = (page - 1) * limit;
     this.query = this.query.skip(skip).limit(limit);
-    /**
-     * @returns {this}
-     */
     return this;
   }
   /**
