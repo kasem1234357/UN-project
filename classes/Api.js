@@ -129,7 +129,7 @@ class API {
           status: "success",
           isSuccess:true,
           key:options?.status || responce_status[type].status,
-          pagging:null,
+          pagging:pagging || null,
           dataList:data,
           message: options?.customMsg || responce_status[type].msg,
           

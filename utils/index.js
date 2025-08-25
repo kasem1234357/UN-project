@@ -7,6 +7,7 @@ const cloudinaryDelete = require('./cloudinaryDelete')
 const cloudinaryUpload = require('./cloudinaryUpload')
 const sendToEmail = require('./sendToEmail')
 const { MapBuildingSituationEnum } = require('../constraints/CONSTANTS')
+const { generatePolygonIdFromPoints } = require('./createPolygonId')
 function evaluateBuildingCondition(rating) {
   // Convert levels to numeric values
   const damageLevels = {
@@ -80,6 +81,7 @@ module.exports = {
    cloudinaryDelete,
    cloudinaryUpload,
    sendToEmail,
-   evaluateBuildingCondition
+   evaluateBuildingCondition,
+   generatePolygonIdFromPoints
    
 }

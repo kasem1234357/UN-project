@@ -2,9 +2,36 @@ const HeritageBuildingAssessment = require('../models/HeritageBuilding');
 const asyncErrorHandler = require('../wrapper_functions/asyncErrorHandler');
 const { format } = require('date-fns'); // Assuming you use this
 const API = require('../classes/Api'); // Assuming similar structure to your `createOrder`
-const { evaluateBuildingCondition } = require('../utils');
+const { evaluateBuildingCondition, generatePolygonIdFromPoints } = require('../utils');
 const evaluateBuilding = require('../models/evaluateBuilding');
+const User = require('../models/User');
+const geoJson = require('../polygonIds.json')
+// const { promises: fs } = require('node:fs');
+// let ids = [];
+//     geoJson.features.forEach(feature =>{
+//       const id = generatePolygonIdFromPoints(feature.geometry.coordinates[0])
+//      ids.push(id)
+      
+      
+//     })
+//     console.log(ids);
+//     (async () => {
+//   try {
+//     // Array of polygon IDs (example)
+//     const polygonIds = ids
 
+//     // Convert the array to JSON string
+//     const jsonData = JSON.stringify(polygonIds, null, 2); // Pretty-print with 2 spaces
+
+//     // Write JSON to file
+//     await fs.writeFile('polygonIds.json', jsonData, 'utf8');
+
+//     console.log('polygonIds.json has been written successfully!');
+//   } catch (error) {
+//     console.error('Error writing JSON file:', error);
+//   }
+// })();
+    
 function formatDates(data, fields = [
   'inspectionDate',
   'deliveryDate',
@@ -102,6 +129,55 @@ exports.getKeys = asyncErrorHandler(async (req, res, next)=>{
     const data = await api.query
     api.dataHandler('fetch',data)
 })
+exports.getKeysForFront = asyncErrorHandler(async (req, res, next)=>{
+    const api = new API(req, res);
+    const pipline =[
+        {
+            $lookup: {
+                from: 'heritagebuildingassessments', // MongoDB collection name
+                localField: 'id',
+                foreignField: 'polygonId',
+                as: 'heritage'
+            }
+        },
+        {
+            $addFields: {
+                function: {
+                    $cond: [
+                        { $gt: [{ $size: '$heritage' }, 0] },
+                        { $arrayElemAt: ['$heritage.function', 0] },
+                        'unknown'
+                    ]
+                }
+            }
+        },
+        {
+            $project: {
+                heritage: 0 // remove the temporary lookup array
+            }
+        }
+    ]
+     api.modify(evaluateBuilding.aggregate(pipline)).paginate()
+    const data = await api.query
+     const dt = JSON.parse(JSON.stringify(data))
+     console.log(dt);
+     
+    const refactoredData = dt.map((item,index) =>{
+
+          const indexItem = geoJson.indexOf(item.id)
+          if(indexItem === -1){
+            console.log('wrong value');
+            console.log(item.id);
+            return item
+          }else {
+            return {
+              ...item,
+              index:indexItem
+            }
+          }
+    })
+    api.dataHandler('fetch',refactoredData)
+})
 exports.getAllStatics = asyncErrorHandler(async(req,res,next)=>{
   const pipeline = [
     // Join with User to get reviewer info (editBy)
@@ -143,14 +219,21 @@ exports.getAllStatics = asyncErrorHandler(async(req,res,next)=>{
         buildingStatus: '$evaluationData.key',
         createdAt:1,
         constructionType:1,
-        polygonId:1
+        polygonId:1,
+        function:1
       }
     }
   ];
   const api = new API(req,res)
   api.modify(HeritageBuildingAssessment.aggregate(pipeline) ).filter().sort().paginate()
   const result = await api.query
-  api.dataHandler('fetch',result)
+  const totalElements = await HeritageBuildingAssessment.countDocuments()
+  api.dataHandler('fetch',formatDates(result),{},{
+    total:totalElements,
+    totalPages:Math.ceil(totalElements/(req.query.limit || 10)),
+    page:req.query.page || 1
+
+  })
 })
 exports.getAll = asyncErrorHandler(async(req,res,next)=>{
 
@@ -158,5 +241,46 @@ exports.getAll = asyncErrorHandler(async(req,res,next)=>{
   api.modify(HeritageBuildingAssessment ).filter().sort().paginate()
   const result = await api.query
   api.dataHandler('fetch',result)
+})
+exports.getAllEngineersStatics = asyncErrorHandler(async(req,res,next)=>{
+  const api = new API(req,res)
+   const pipeline = [
+    // Lookup all heritage building assessments for each user (editBy field)
+    {
+      $lookup: {
+        from: 'heritagebuildingassessments', // check actual collection name
+        localField: '_id',
+        foreignField: 'editBy',
+        as: 'reviews'
+      }
+    },
+    // Add numberOfReviews as the size of the reviews array
+    {
+      $addFields: {
+        numberOfReviews: { $size: '$reviews' }
+      }
+    },
+    // Project only the required fields
+    {
+      $project: {
+        _id: 0,
+        userName: 1,
+        email: 1,
+        role: 1,
+        numberOfReviews: 1
+      }
+    }
+  ];
+  api.modify(User.aggregate(pipeline) ).filter(['userName']).sort().paginate()
+  const result = await api.query
+  const totalElements = await User.countDocuments()
+  console.log(totalElements);
+  
+  api.dataHandler('fetch',formatDates(result),{},{
+    total:totalElements,
+    totalPages:Math.ceil(totalElements/(req.query.limit || 10)),
+    page:req.query.page || 1
+
+  })
 })
 
