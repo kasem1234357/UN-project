@@ -179,8 +179,10 @@ exports.getKeysForFront = asyncErrorHandler(async (req, res, next)=>{
     api.dataHandler('fetch',refactoredData)
 })
 exports.getAllStatics = asyncErrorHandler(async(req,res,next)=>{
+  
   const pipeline = [
     // Join with User to get reviewer info (editBy)
+  
     {
       $lookup: {
         from: 'users', // collection name in MongoDB
@@ -210,7 +212,30 @@ exports.getAllStatics = asyncErrorHandler(async(req,res,next)=>{
         preserveNullAndEmptyArrays: true
       }
     },
-    // Project the required fields
+    {
+    $match: {
+      'evaluationData.key': { 
+        '$regex': req.query.buildingStatus, 
+        '$options': 'i' 
+      },
+      "reviewerData.userName":{
+        '$regex': req.query.reviewer, 
+        '$options': 'i' 
+      },
+      "function":{
+        '$regex': req.query.function, 
+        '$options': 'i' 
+      },
+       "neighborhood":{
+        '$regex': req.query.areaName, 
+        '$options': 'i' 
+      },
+      "constructionType":{
+        '$regex': req.query.constructionType, 
+        '$options': 'i' 
+      },
+    }
+  },
     {
       $project: {
         _id: 0,
@@ -222,10 +247,11 @@ exports.getAllStatics = asyncErrorHandler(async(req,res,next)=>{
         polygonId:1,
         function:1
       }
-    }
+    },
+    
   ];
   const api = new API(req,res)
-  api.modify(HeritageBuildingAssessment.aggregate(pipeline) ).filter().sort().paginate()
+  api.modify(HeritageBuildingAssessment.aggregate(pipeline) ).paginate()
   const result = await api.query
   const totalElements = await HeritageBuildingAssessment.countDocuments()
   api.dataHandler('fetch',formatDates(result),{},{
